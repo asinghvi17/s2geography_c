@@ -48,6 +48,7 @@ jobs:
           cmake -S s2geography -B build \
             -DCMAKE_CXX_STANDARD=17 \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH="$CONDA_PREFIX" \
             -DBUILD_SHARED_LIBS=OFF \
             -DS2GEOGRAPHY_BUILD_TESTS=ON \
             -DS2GEOGRAPHY_BUILD_C_API=ON \
