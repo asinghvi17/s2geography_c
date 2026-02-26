@@ -91,6 +91,53 @@ int s2geog_geography_num_shapes(const S2GeogGeography* geog);
 int s2geog_geography_is_empty(const S2GeogGeography* geog, int* out);
 
 // ============================================================
+// Geometry construction from raw coordinates
+// ============================================================
+// All coordinate arrays are BORROWED — the caller retains ownership.
+// lnglat arrays: interleaved [lng0, lat0, lng1, lat1, ...] in degrees.
+// xyz arrays: interleaved [x0, y0, z0, x1, y1, z1, ...] unit-sphere coords.
+// Returned geographies are owned by the caller (free with s2geog_geography_destroy).
+
+/// Create a single-point geography from (lng, lat) in degrees.
+S2GeogGeography* s2geog_make_point_lnglat(double lng, double lat);
+
+/// Create a single-point geography from a unit-sphere XYZ vector.
+S2GeogGeography* s2geog_make_point_xyz(double x, double y, double z);
+
+/// Create a multi-point geography from n interleaved (lng, lat) pairs.
+S2GeogGeography* s2geog_make_multipoint_lnglat(const double* lnglat, int64_t n);
+
+/// Create a multi-point geography from n interleaved (x, y, z) triples.
+S2GeogGeography* s2geog_make_multipoint_xyz(const double* xyz, int64_t n);
+
+/// Create a polyline geography from n interleaved (lng, lat) pairs.
+S2GeogGeography* s2geog_make_polyline_lnglat(const double* lnglat, int64_t n);
+
+/// Create a polyline geography from n interleaved (x, y, z) triples.
+S2GeogGeography* s2geog_make_polyline_xyz(const double* xyz, int64_t n);
+
+/// Create a polygon geography from interleaved (lng, lat) pairs.
+/// ring_offsets: array of n_rings+1 offsets into the coordinate array
+///   (e.g., [0, 4, 7] means ring 0 has coords[0..3], ring 1 has coords[4..6]).
+/// First ring is the outer shell; subsequent rings are holes.
+S2GeogGeography* s2geog_make_polygon_lnglat(const double* lnglat,
+                                             const int64_t* ring_offsets,
+                                             int64_t n_rings);
+
+/// Create a polygon geography from interleaved (x, y, z) triples.
+/// ring_offsets: same semantics as _lnglat variant.
+S2GeogGeography* s2geog_make_polygon_xyz(const double* xyz,
+                                          const int64_t* ring_offsets,
+                                          int64_t n_rings);
+
+/// Create a geography collection from an array of existing geographies.
+/// The collection takes OWNERSHIP of each geog in the array.
+/// After this call, the caller must NOT destroy the individual geographies —
+/// only destroy the returned collection.
+/// The geogs array pointer itself remains caller-owned.
+S2GeogGeography* s2geog_make_collection(S2GeogGeography** geogs, int64_t n);
+
+// ============================================================
 // WKT IO
 // ============================================================
 

@@ -27,4 +27,12 @@ if(S2GEOGRAPHY_BUILD_TESTS)
   target_link_libraries(s2geography_c_test s2geography_c GTest::gtest_main)
   include(GoogleTest)
   gtest_discover_tests(s2geography_c_test)
+
+  # Pure C test — compiled as C to verify the API is callable from C
+  add_executable(s2geography_c_api_test test/s2geography_c_api_test.c)
+  set_target_properties(s2geography_c_api_test PROPERTIES
+    C_STANDARD 11
+    LINKER_LANGUAGE C)
+  target_link_libraries(s2geography_c_api_test s2geography_c)
+  add_test(NAME s2geography_c_api_test COMMAND s2geography_c_api_test)
 endif()

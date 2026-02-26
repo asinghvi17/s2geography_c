@@ -94,6 +94,131 @@ int s2geog_geography_is_empty(const S2GeogGeography* geog, int* out) {
 }
 
 // ============================================================
+// Geometry construction from raw coordinates
+// ============================================================
+
+static inline S2Point lnglat_to_s2point(double lng, double lat) {
+  return S2LatLng::FromDegrees(lat, lng).ToPoint();
+}
+
+S2GeogGeography* s2geog_make_point_lnglat(double lng, double lat) {
+  S2GEOG_TRY
+  return wrap_geog(new PointGeography(lnglat_to_s2point(lng, lat)));
+  S2GEOG_CATCH_PTR
+}
+
+S2GeogGeography* s2geog_make_point_xyz(double x, double y, double z) {
+  S2GEOG_TRY
+  return wrap_geog(new PointGeography(S2Point(x, y, z)));
+  S2GEOG_CATCH_PTR
+}
+
+S2GeogGeography* s2geog_make_multipoint_lnglat(const double* lnglat,
+                                                 int64_t n) {
+  S2GEOG_TRY
+  std::vector<S2Point> points(n);
+  for (int64_t i = 0; i < n; i++) {
+    points[i] = lnglat_to_s2point(lnglat[2 * i], lnglat[2 * i + 1]);
+  }
+  return wrap_geog(new PointGeography(std::move(points)));
+  S2GEOG_CATCH_PTR
+}
+
+S2GeogGeography* s2geog_make_multipoint_xyz(const double* xyz, int64_t n) {
+  S2GEOG_TRY
+  std::vector<S2Point> points(n);
+  for (int64_t i = 0; i < n; i++) {
+    points[i] = S2Point(xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2]);
+  }
+  return wrap_geog(new PointGeography(std::move(points)));
+  S2GEOG_CATCH_PTR
+}
+
+S2GeogGeography* s2geog_make_polyline_lnglat(const double* lnglat, int64_t n) {
+  S2GEOG_TRY
+  std::vector<S2Point> vertices(n);
+  for (int64_t i = 0; i < n; i++) {
+    vertices[i] = lnglat_to_s2point(lnglat[2 * i], lnglat[2 * i + 1]);
+  }
+  auto polyline = std::make_unique<S2Polyline>(std::move(vertices),
+                                                S2Debug::DISABLE);
+  return wrap_geog(new PolylineGeography(std::move(polyline)));
+  S2GEOG_CATCH_PTR
+}
+
+S2GeogGeography* s2geog_make_polyline_xyz(const double* xyz, int64_t n) {
+  S2GEOG_TRY
+  std::vector<S2Point> vertices(n);
+  for (int64_t i = 0; i < n; i++) {
+    vertices[i] = S2Point(xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2]);
+  }
+  auto polyline = std::make_unique<S2Polyline>(std::move(vertices),
+                                                S2Debug::DISABLE);
+  return wrap_geog(new PolylineGeography(std::move(polyline)));
+  S2GEOG_CATCH_PTR
+}
+
+S2GeogGeography* s2geog_make_polygon_lnglat(const double* lnglat,
+                                              const int64_t* ring_offsets,
+                                              int64_t n_rings) {
+  S2GEOG_TRY
+  std::vector<std::unique_ptr<S2Loop>> loops;
+  for (int64_t r = 0; r < n_rings; r++) {
+    int64_t start = ring_offsets[r];
+    int64_t end = ring_offsets[r + 1];
+    std::vector<S2Point> pts(end - start);
+    for (int64_t i = start; i < end; i++) {
+      pts[i - start] = lnglat_to_s2point(lnglat[2 * i], lnglat[2 * i + 1]);
+    }
+    auto loop = std::make_unique<S2Loop>();
+    loop->set_s2debug_override(S2Debug::DISABLE);
+    loop->Init(pts);
+    loop->Normalize();
+    loops.push_back(std::move(loop));
+  }
+  auto polygon = std::make_unique<S2Polygon>();
+  polygon->set_s2debug_override(S2Debug::DISABLE);
+  polygon->InitNested(std::move(loops));
+  return wrap_geog(new PolygonGeography(std::move(polygon)));
+  S2GEOG_CATCH_PTR
+}
+
+S2GeogGeography* s2geog_make_polygon_xyz(const double* xyz,
+                                          const int64_t* ring_offsets,
+                                          int64_t n_rings) {
+  S2GEOG_TRY
+  std::vector<std::unique_ptr<S2Loop>> loops;
+  for (int64_t r = 0; r < n_rings; r++) {
+    int64_t start = ring_offsets[r];
+    int64_t end = ring_offsets[r + 1];
+    std::vector<S2Point> pts(end - start);
+    for (int64_t i = start; i < end; i++) {
+      pts[i - start] = S2Point(xyz[3 * i], xyz[3 * i + 1], xyz[3 * i + 2]);
+    }
+    auto loop = std::make_unique<S2Loop>();
+    loop->set_s2debug_override(S2Debug::DISABLE);
+    loop->Init(pts);
+    loop->Normalize();
+    loops.push_back(std::move(loop));
+  }
+  auto polygon = std::make_unique<S2Polygon>();
+  polygon->set_s2debug_override(S2Debug::DISABLE);
+  polygon->InitNested(std::move(loops));
+  return wrap_geog(new PolygonGeography(std::move(polygon)));
+  S2GEOG_CATCH_PTR
+}
+
+S2GeogGeography* s2geog_make_collection(S2GeogGeography** geogs, int64_t n) {
+  S2GEOG_TRY
+  std::vector<std::unique_ptr<Geography>> features(n);
+  for (int64_t i = 0; i < n; i++) {
+    features[i].reset(unwrap(geogs[i]));
+  }
+  return wrap_geog(new GeographyCollection(std::move(features)));
+  S2GEOG_CATCH_PTR
+}
+
+// ============================================================
 // WKT IO
 // ============================================================
 
