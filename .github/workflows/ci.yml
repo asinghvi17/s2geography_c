@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout s2geography_c
         uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
 
       - name: Install dependencies
         shell: bash -l {0}
-        run: mamba install -y -n s2geography-dev cxx-compiler libabseil cmake openssl
+        run: mamba install -y cxx-compiler libabseil cmake openssl
 
       - name: Configure
         shell: bash -l {0}
