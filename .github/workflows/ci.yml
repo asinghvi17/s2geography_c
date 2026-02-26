@@ -40,7 +40,7 @@ jobs:
 
       - name: Install dependencies
         shell: bash -l {0}
-        run: mamba install -y -n s2geography-dev cxx-compiler s2geometry libabseil cmake openssl
+        run: mamba install -y -n s2geography-dev cxx-compiler libabseil cmake openssl
 
       - name: Configure
         shell: bash -l {0}
@@ -51,7 +51,7 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF \
             -DS2GEOGRAPHY_BUILD_TESTS=ON \
             -DS2GEOGRAPHY_BUILD_C_API=ON \
-            -DS2GEOGRAPHY_S2_SOURCE=CONDA
+            -DS2GEOGRAPHY_S2_SOURCE=BUNDLED
 
       - name: Build
         shell: bash -l {0}
